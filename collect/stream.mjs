@@ -85,7 +85,13 @@ let tt = null, ttViewers = 0, ttBusy = false;
 async function pollTikTok() {
   if (!TT_USER) return;
   const s = sessions.tiktok;
-  if (tt && s && !s.ended_at) { s.samples.push({ t: new Date().toISOString().slice(11, 16), v: ttViewers }); return; }
+  if (tt && s && !s.ended_at) {
+    // Si l'événement « spectateurs » n'arrive pas, on relit le compteur de la salle.
+    if (!ttViewers) {
+      try { const info = await tt.fetchRoomInfo(); ttViewers = Number(info?.user_count ?? info?.data?.user_count ?? info?.stats?.total_user ?? 0) || 0; } catch {}
+    }
+    s.samples.push({ t: new Date().toISOString().slice(11, 16), v: ttViewers }); return;
+  }
   if (ttBusy) return;
   ttBusy = true;
   try {
